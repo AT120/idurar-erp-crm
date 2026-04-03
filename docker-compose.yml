@@ -1,0 +1,28 @@
+services:
+    mongo:
+        image: mongo:8.0.4
+        restart: always
+        environment:
+            MONGO_INITDB_DATABASE: your_database_name
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: example
+
+    backend:
+        build: backend/
+        ports:
+            - 8888:8888
+        environment:
+            DATABASE:  "mongodb://root:example@mongo:27017"
+
+
+    frontend:
+        build: frontend/
+        ports:
+            - 3000:3000
+        command: "npm run dev -- --host"
+        environment:
+            VITE_FILE_BASE_URL:  'http://localhost:8888/'
+            VITE_BACKEND_SERVER: "http://backend:8888"
+            PROD: true
+
+

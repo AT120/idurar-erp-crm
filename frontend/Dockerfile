@@ -6,4 +6,5 @@ RUN npm install
 
 COPY . /app
 
+EXPOSE 3000
 ENTRYPOINT npm run dev -- --host

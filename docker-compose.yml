@@ -13,6 +13,8 @@ services:
             - 8888:8888
         environment:
             DATABASE:  "mongodb://root:example@mongo:27017"
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
 
 
     frontend:
@@ -26,3 +28,5 @@ services:
             PROD: true
 
 
+    redis:
+        image: valkey:valkey-alpine

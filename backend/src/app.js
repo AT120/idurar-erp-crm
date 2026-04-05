@@ -15,8 +15,18 @@ const errorHandlers = require('./handlers/errorHandlers');
 const erpApiRouter = require('./routes/appRoutes/appApi');
 
 const fileUpload = require('express-fileupload');
+const { default: idempotencyMiddleware } = require('./middlewares/idempotency');
 // create our Express app
 const app = express();
+const Redis = require("ioredis");
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+});
+redis.on("error", (err) => {
+  console.error("Redis error:", err);
+});
 
 app.use(
   cors({
@@ -36,6 +46,7 @@ app.use(compression());
 
 // Here our API Routes
 
+app.use('/api', idempotencyMiddleware(redis))
 app.use('/api', coreAuthRouter);
 app.use('/api', adminAuth.isValidAuthToken, coreApiRouter);
 app.use('/api', adminAuth.isValidAuthToken, erpApiRouter);

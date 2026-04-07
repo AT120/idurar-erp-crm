@@ -16,6 +16,8 @@ const erpApiRouter = require('./routes/appRoutes/appApi');
 
 const fileUpload = require('express-fileupload');
 const { default: idempotencyMiddleware } = require('./middlewares/idempotency');
+const { client: promClient, metricsMiddleware } = require('./metrics');
+
 // create our Express app
 const app = express();
 const Redis = require("ioredis");
@@ -40,6 +42,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(compression());
+
+// Measure every HTTP request duration (for Prometheus dashboards)
+app.use(metricsMiddleware);
+
+// --- Prometheus metrics endpoint ---
+// Prometheus scrapes this every 15s to collect our metrics
+// Visit http://localhost:8888/metrics to see raw metrics
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', promClient.register.contentType);
+  res.end(await promClient.register.metrics());
+});
+
+// --- Health check endpoint ---
+// Used by Docker/k8s to know if the app is alive
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // // default options
 // app.use(fileUpload());

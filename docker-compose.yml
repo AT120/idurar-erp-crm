@@ -1,4 +1,22 @@
+# =============================================================================
+# IDURAR ERP/CRM - Docker Compose
+# =============================================================================
+# Original services (by Artem): mongo, backend, frontend, redis
+# Added services (by Fouss):    jaeger, prometheus, grafana
+#
+# HOW TO USE:
+#   docker-compose up --build
+#
+# URLS:
+#   Frontend:    http://localhost:3000
+#   Backend API: http://localhost:8888
+#   Jaeger UI:   http://localhost:16686  (distributed tracing)
+#   Prometheus:  http://localhost:9090   (metrics database)
+#   Grafana:     http://localhost:3001   (dashboards - login: admin/admin)
+# =============================================================================
+
 services:
+    # --- Database (by Artem) ---
     mongo:
         image: mongo:8.0.4
         restart: always
@@ -7,26 +25,85 @@ services:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: example
 
+    # --- Cache + Idempotency store (by Artem) ---
+    redis:
+        image: valkey/valkey:8-alpine
+
+    # --- Backend API (by Artem, enhanced by Fouss with tracing + metrics) ---
     backend:
         build: backend/
         ports:
             - 8888:8888
         environment:
-            DATABASE:  "mongodb://root:example@mongo:27017"
+            DATABASE: "mongodb://root:example@mongo:27017"
             REDIS_HOST: redis
             REDIS_PORT: 6379
+            # Email: replace with Artem's real Resend API key
+            RESEND_API: "${RESEND_API}"
+            COMPANY_EMAIL: "onboarding@resend.dev"
+            # OpenTelemetry: send traces to Jaeger
+            OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+        depends_on:
+            - mongo
+            - redis
+            - jaeger
 
-
+    # --- Frontend (by Artem) ---
     frontend:
         build: frontend/
         ports:
             - 3000:3000
         command: "npm run dev -- --host"
         environment:
-            VITE_FILE_BASE_URL:  'http://localhost:8888/'
+            VITE_FILE_BASE_URL: 'http://localhost:8888/'
             VITE_BACKEND_SERVER: "http://backend:8888"
             PROD: true
+        depends_on:
+            - backend
 
+    # =========================================================================
+    # MONITORING STACK (added by Fouss)
+    # =========================================================================
 
-    redis:
-        image: valkey:valkey-alpine
+    # --- Jaeger: Distributed Tracing ---
+    # Receives traces from the backend via OTLP protocol
+    # Shows the full journey of each request (like a GPS for your code)
+    jaeger:
+        image: jaegertracing/all-in-one:latest
+        restart: always
+        ports:
+            - "17400:16686"  # Jaeger UI — open http://localhost:17400
+            - "4318:4318"    # OTLP HTTP receiver (where backend sends traces)
+        environment:
+            COLLECTOR_OTLP_ENABLED: "true"
+
+    # --- Prometheus: Metrics Database ---
+    # Scrapes /metrics endpoint from the backend every 15 seconds
+    # Stores numbers like: how many emails sent, how long they took, etc.
+    prometheus:
+        image: prom/prometheus:v2.53.0
+        restart: always
+        ports:
+            - "9090:9090"  # Prometheus UI
+        volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml
+        depends_on:
+            - backend
+
+    # --- Grafana: Dashboard Visualization ---
+    # Connects to Prometheus + Jaeger to show beautiful graphs
+    # Login: admin / admin
+    grafana:
+        image: grafana/grafana:11.3.0
+        restart: always
+        ports:
+            - "3001:3000"  # Grafana UI (3001 to avoid conflict with frontend)
+        environment:
+            GF_SECURITY_ADMIN_USER: admin
+            GF_SECURITY_ADMIN_PASSWORD: admin
+            GF_USERS_ALLOW_SIGN_UP: "false"
+        volumes:
+            - ./grafana/provisioning:/etc/grafana/provisioning
+        depends_on:
+            - prometheus
+            - jaeger

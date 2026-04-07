@@ -1,0 +1,25 @@
+# =============================================================================
+# Prometheus Configuration
+# =============================================================================
+# This tells Prometheus WHERE to find metrics and HOW OFTEN to collect them.
+#
+# Think of it like this:
+# - Prometheus is a person with a clipboard
+# - Every 15 seconds, they walk to the backend and write down the numbers
+# - Those numbers are stored and can be graphed in Grafana
+# =============================================================================
+
+global:
+  scrape_interval: 15s      # Collect metrics every 15 seconds
+  evaluation_interval: 15s  # Evaluate alerting rules every 15 seconds
+
+scrape_configs:
+  # Scrape the IDURAR backend for our custom metrics
+  # (email counts, circuit breaker state, HTTP durations, Node.js stats)
+  - job_name: 'idurar-backend'
+    metrics_path: '/metrics'   # The endpoint we created in app.js
+    static_configs:
+      - targets: ['backend:8888']  # Docker service name + port
+        labels:
+          app: 'idurar-erp'
+          environment: 'production'

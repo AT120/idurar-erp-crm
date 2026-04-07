@@ -1,0 +1,31 @@
+# =============================================================================
+# Grafana Data Sources (auto-configured on startup)
+# =============================================================================
+# This tells Grafana where to find data:
+# 1. Prometheus — for metrics (numbers, counters, durations)
+# 2. Jaeger — for traces (request journeys)
+#
+# Without this file, you'd have to manually add these in the Grafana UI.
+# With this file, they're ready to go when Grafana starts.
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  # Prometheus: where our metrics live
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  # Jaeger: where our traces live
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: ''
+    editable: true

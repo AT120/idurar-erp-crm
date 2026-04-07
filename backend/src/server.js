@@ -1,3 +1,8 @@
+// IMPORTANT: Tracing must be loaded FIRST, before any other imports!
+// This allows OpenTelemetry to "hook into" Express, HTTP, and MongoDB
+// before they are loaded, so all calls are traced automatically.
+require('./tracing');
+
 require('module-alias/register');
 const mongoose = require('mongoose');
 const { globSync } = require('glob');

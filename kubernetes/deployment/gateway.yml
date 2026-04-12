@@ -1,0 +1,45 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+    name: idurar-gateway
+spec:
+    gatewayClassName: idurar-gateway-class
+    listeners:
+      - name: https
+        port: 30045
+        protocol: HTTPS
+        hostname: "*.deployment-risks.duckdns.org"
+        tls: 
+            mode: Terminate
+            certificateRefs: deployment-risks-tls
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+    name: fronted-route
+spec:
+    parentRefs:
+      - name: idurar-gateway
+    hostnames:
+      - frontend.deployment-risks.duckdns.org
+    rules:
+      - backendRefs:
+          - name: idurar-frontend
+            port: 3000
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+    name: backend-route
+spec:
+    parentRefs:
+      - name: idurar-gateway
+    hostnames:
+      - backend.deployment-risks.duckdns.org
+    rules:
+      - backendRefs:
+          - name: idurar-backend
+            port: 8888
+

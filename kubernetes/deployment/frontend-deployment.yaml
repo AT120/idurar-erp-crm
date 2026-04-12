@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: idurar-frontend
+spec:
+    type: ClusterIP
+    selector:
+        app: idurar-frontend
+    ports:
+      - port: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: idurar-frontend
+spec:
+    selector:
+        matchLabels:
+            app: idurar-frontend
+    replicas: 2
+    template:
+        metadata:
+            labels:
+                app: idurar-frontend
+        spec:
+            imagePullSecrets:
+              - name: cr-classic-registry-secret
+            containers:
+              - name: idurar-frontend
+                image: cr.classic.duckdns.org:58083/idurar-frontend:latest
+                ports:
+                  - containerPort: 3000
+                env:
+                  - name: PUBLIC_SERVER_FILE
+                    value: https://backend.deployment-risks.duckdns.org:30045/
+                  - name: VITE_BACKEND_SERVER
+                    value: https://backend.deployment-risks.duckdns.org:30045/
+                  - name: VITE_DEV_REMOTE
+                    value: remote

@@ -82,7 +82,7 @@ const sendViaApi = async ({ email, name, targetLocation }) => {
     const attatchedFile = fs.readFileSync(targetLocation);
 
     // Send the mail using the send method
-    const { data } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: idurar_app_email,
       to: email,
       subject: 'Invoice From ' + company_name,
@@ -95,11 +95,16 @@ const sendViaApi = async ({ email, name, targetLocation }) => {
       ],
       html: SendInvoice({ name, title: 'Invoice From ' + company_name }),
     });
+    if (error) {
+      console.log("failed to send an email: ", error)
+      throw new Error('error while sending email ');
+    }
 
+    console.log("sent email successfully: ", data)
     return data;
   } catch (error) {
     console.log("failed to send an email: ", error)
-    throw new error('error while sending email ');
+    throw new Error('error while sending email ');
   }
 };
 

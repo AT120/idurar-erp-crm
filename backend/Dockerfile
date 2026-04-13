@@ -8,4 +8,4 @@ RUN npm install
 COPY . /app
 
 EXPOSE 8888
-ENTRYPOINT npm run setup && npm run dev
+ENTRYPOINT npm run setup && npm run start

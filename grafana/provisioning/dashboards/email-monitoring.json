@@ -1,0 +1,259 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Email Send Rate (success vs failure)",
+      "description": "How many emails are being sent per minute, split by success/failure/circuit_open",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "spanNulls": false,
+            "drawStyle": "line",
+            "pointSize": 5,
+            "showPoints": "auto"
+          },
+          "unit": "ops"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "success" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "failure" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "circuit_open" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "rate(email_send_total[1m])",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Circuit Breaker State",
+      "description": "0 = Closed (normal), 1 = Open (blocking emails), 2 = Half-Open (testing)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "CLOSED (OK)", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "OPEN (BLOCKING)", "color": "red" } } },
+            { "type": "value", "options": { "2": { "text": "HALF-OPEN (TESTING)", "color": "orange" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 2 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "circuit_breaker_state",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Total Emails Sent",
+      "description": "Cumulative count of all email send attempts",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(email_send_total)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Email Send Duration (p50 / p95 / p99)",
+      "description": "How long it takes to send an email — 50th, 95th, and 99th percentile",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "drawStyle": "line" },
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(email_send_duration_seconds_bucket[5m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(email_send_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(email_send_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "title": "Circuit Breaker Rejections",
+      "description": "How many requests were rejected because the circuit breaker was open",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "custom": { "lineWidth": 2, "fillOpacity": 30, "drawStyle": "bars" },
+          "unit": "ops"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(circuit_breaker_rejections_total[1m])",
+          "legendFormat": "Rejections/min",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "HTTP Request Duration by Route",
+      "description": "Average response time for each API endpoint",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "drawStyle": "line" },
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))",
+          "legendFormat": "{{route}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Email Success Rate (%)",
+      "description": "Percentage of emails successfully sent (target SLO: 99.9%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "min": 0,
+          "max": 100,
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 95 },
+              { "color": "yellow", "value": 99 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * (sum(email_send_total{status=\"success\"}) / sum(email_send_total))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Node.js Memory Usage",
+      "description": "How much RAM the backend is using",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20, "drawStyle": "line" },
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "expr": "idurar_process_resident_memory_bytes",
+          "legendFormat": "RSS Memory",
+          "refId": "A"
+        },
+        {
+          "expr": "idurar_nodejs_heap_size_used_bytes",
+          "legendFormat": "Heap Used",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Node.js Event Loop Lag",
+      "description": "How fast the event loop is responding — high values mean the server is overloaded",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "custom": { "lineWidth": 2, "fillOpacity": 15, "drawStyle": "line" },
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "idurar_nodejs_eventloop_lag_seconds",
+          "legendFormat": "Event Loop Lag",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["idurar", "email", "monitoring"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "IDURAR - Email Monitoring & System Health",
+  "uid": "idurar-email-monitoring",
+  "version": 1
+}

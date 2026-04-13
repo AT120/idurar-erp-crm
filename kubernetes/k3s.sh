@@ -16,6 +16,7 @@ export KUBECONFIG=~/.config/kube/config
 
 kubectl create secret tls deployment-risks-tls --cert ./certs/fullchain.pem --key ./certs/privkey.pem
 kubectl create secret generic backend-env --from-env-file backend-secrets.env
+kubectl create secret generic grafana-creds --from-literal password=example 
 kubectl create secret docker-registry cr-classic-registry-secret --docker-server=cr.classic.duckdns.org:58083 --docker-username=example --docker-password=example
 
 kubectl apply --server-side  -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/refs/tags/v2.5.1/deploy/crds.yaml

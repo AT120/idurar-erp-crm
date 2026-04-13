@@ -29,4 +29,4 @@ services:
 
 
     redis:
-        image: valkey:valkey-alpine
+        image: valkey/valkey:alpine

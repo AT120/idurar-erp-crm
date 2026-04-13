@@ -43,24 +43,27 @@ spec:
                     claimName: mongo-storage
 
 ---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-    name: mongo-pv
-spec:
-    # storageClassName: manual
-    accessModes:
-      - ReadWriteOnce
-    capacity:
-        storage: 1Gi
-
----
+# NOTE: k3s имеет встроенный дефолтный storage
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#     name: mongo-pv
+# spec:
+#     # storageClassName: manual
+#     accessModes:
+#       - ReadWriteOnce
+#     capacity:
+#         storage: 1Gi
+#
+# ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
     name: mongo-storage
+spec:
     accessModes:
       - ReadWriteOnce
-    capacity:
-        storage: 1Gi
+    resources:
+        requests:
+            storage: 1Gi
 

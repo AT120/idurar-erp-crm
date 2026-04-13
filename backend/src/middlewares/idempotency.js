@@ -7,10 +7,9 @@ function idempotencyMiddleware(redis, options = {}) {
   return async function(req, res, next) {
     const key = req.header("Idempotency-Key");
     if (!key) {
-      console.log("no key found, skipping a request");
+      console.log("no idempotent key found");
       return next();
     }
-    console.log("processing request with a key", key);
 
     const redisKey = `idem:${key}`;
     const lockKey = `${redisKey}:lock`;
@@ -43,8 +42,9 @@ function idempotencyMiddleware(redis, options = {}) {
       await redis.del(lockKey);
     };
 
-    res.send = async (body) => {
-      await finalize(body);
+    res.send = (body) => {
+      res.send = originalSend
+      finalize(body).catch(err => console.error("Failed to cache idempotent response:", err));
       return originalSend(body);
     };
 

@@ -39,6 +39,8 @@ spec:
                     value: "6379"
                   - name: PUBLIC_SERVER_FILE
                     value: https://backend.deployment-risks.duckdns.org:30045
+                  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+                    value: http://jaeger:4318
                   - name: JWT_SECRET
                     valueFrom: 
                         secretKeyRef:
